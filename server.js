@@ -38,73 +38,41 @@ function correoValido(email) {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
-function enviarCorreo(destinatario, asunto, texto) {
+function enviarCorreo(destinatario, asunto, texto, html = null) {
     return transporter.sendMail({
-  from: `"ByteCore IA Solutions" <${process.env.MAIL_FROM || process.env.SMTP_USER}>`,
-  to: email,
-  subject: "Tu código de verificación | ByteCore IA Solutions",
-  text: `Hola, ${nombre}:
+        from: `"ByteCore IA Solutions" <${process.env.MAIL_FROM || process.env.SMTP_USER}>`,
+        to: destinatario,
+        subject: asunto,
+        text: texto,
+        html: html || `<div style="font-family:Arial,sans-serif;white-space:pre-line;line-height:1.6;color:#172033">${escapeHtml(texto)}</div>`
+    });
+}
 
-Recibimos una solicitud para verificar tu correo electrónico con Cora, el asistente virtual de ByteCore IA Solutions.
-
-Tu código de verificación es: ${pin}
-
-Este código caduca en 10 minutos. No lo compartas con otras personas.
-
-Si no solicitaste este código, puedes ignorar este mensaje.
-
-ByteCore IA Solutions
-Atiende. Orienta. Recomienda. Convierte.`,
-  html: `
-    <div style="margin:0;background:#f1f5f9;padding:30px 12px;
-                font-family:Arial,sans-serif;color:#172033">
-      <div style="max-width:560px;margin:auto;background:#ffffff;
-                  border-radius:14px;overflow:hidden">
-        <div style="background:#101827;padding:24px;color:#ffffff">
-          <h2 style="margin:0">ByteCore IA Solutions</h2>
-          <p style="margin:8px 0 0;color:#a8c4d5">
-            Cora · Asistente virtual
-          </p>
-        </div>
-        <div style="padding:28px">
-          <h2>Verifica tu correo electrónico</h2>
-          <p>Hola, ${escapeHtml(nombre)},</p>
-          <p>
-            Recibimos una solicitud para verificar tu correo
-            electrónico durante el proceso de atención con Cora.
-          </p>
-          <div style="background:#eaf8f7;text-align:center;
-                      padding:24px;border-radius:10px">
-            <p style="margin:0;color:#42615f">
-              Tu código de verificación
-            </p>
-            <div style="font-size:34px;font-weight:bold;
-                        letter-spacing:6px;color:#087e78;
-                        margin:16px 0">
-              ${pin}
-            </div>
-            <p style="margin:0;color:#42615f">
-              Válido durante 10 minutos
-            </p>
+function crearHtmlPin(nombre, pin) {
+    return `
+      <div style="margin:0;background:#f1f5f9;padding:30px 12px;font-family:Arial,sans-serif;color:#172033">
+        <div style="max-width:560px;margin:auto;background:#ffffff;border-radius:14px;overflow:hidden">
+          <div style="background:#101827;padding:24px;color:#ffffff">
+            <h2 style="margin:0">ByteCore IA Solutions</h2>
+            <p style="margin:8px 0 0;color:#a8c4d5">Cora · Asistente virtual</p>
           </div>
-          <p>
-            Introduce el código en Cora para continuar.
-            No lo compartas con otras personas.
-          </p>
-          <hr style="border:0;border-top:1px solid #e2e8f0">
-          <p style="font-size:13px;color:#64748b">
-            Si no solicitaste este código, puedes ignorar
-            este mensaje.
-          </p>
-          <p><strong>ByteCore IA Solutions</strong></p>
-          <p style="font-size:12px;color:#64748b">
-            Atiende. Orienta. Recomienda. Convierte.
-          </p>
+          <div style="padding:28px">
+            <h2>Verifica tu correo electrónico</h2>
+            <p>Hola, ${escapeHtml(nombre)},</p>
+            <p>Recibimos una solicitud para verificar tu correo electrónico durante el proceso de atención con Cora.</p>
+            <div style="background:#eaf8f7;text-align:center;padding:24px;border-radius:10px">
+              <p style="margin:0;color:#42615f">Tu código de verificación</p>
+              <div style="font-size:34px;font-weight:bold;letter-spacing:6px;color:#087e78;margin:16px 0">${escapeHtml(pin)}</div>
+              <p style="margin:0;color:#42615f">Válido durante 10 minutos</p>
+            </div>
+            <p>Introduce el código en Cora para continuar. No lo compartas con otras personas.</p>
+            <hr style="border:0;border-top:1px solid #e2e8f0">
+            <p style="font-size:13px;color:#64748b">Si no solicitaste este código, puedes ignorar este mensaje.</p>
+            <p><strong>ByteCore IA Solutions</strong></p>
+            <p style="font-size:12px;color:#64748b">Atiende. Orienta. Recomienda. Convierte.</p>
+          </div>
         </div>
-      </div>
-    </div>
-  `
-});
+      </div>`;
 }
 
 function escapeHtml(value = "") {
@@ -212,9 +180,11 @@ app.post("/api/enviar-pin", async (req, res) => {
 
 Tu código de verificación de Cora es: ${pin}
 
-Este código caduca en 10 minutos. Si no solicitaste este código, puedes ignorar este mensaje.
+Este código caduca en 10 minutos. No lo compartas con otras personas. Si no solicitaste este código, puedes ignorar este mensaje.
 
-ByteCore IA Solutions`
+ByteCore IA Solutions
+Atiende. Orienta. Recomienda. Convierte.`,
+            crearHtmlPin(nombre.trim(), pin)
         );
 
         res.json({
